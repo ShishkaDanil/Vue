@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Пагинация постов</title>
+  <link rel="stylesheet" href="posts.css">
+  <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+  <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+</head>
+<body>
+  <div id="app">
+    <h1>Статьи</h1>
+    <form @submit.prevent="addPost">
+      <div>
+        <label for="title">Заголовок:</label>
+        <input type="text" id="title" v-model="newPost.title" required>
+      </div>
+      <div>
+        <label for="body">Текст:</label>
+        <textarea id="body" v-model="newPost.body" required></textarea>
+      </div>
+      <button type="submit">Добавить пост</button>
+    </form>
+    <ul>
+      <li class="post" v-for="post in pagedPosts" :key="post.id">
+        <h2>{{ post.title }}</h2>
+        <p>{{ post.body }}</p>
+      </li>
+    </ul>
+    <div class="pagination">
+      <button :disabled="currentPage === 1" @click="prevPage">Предыдущая страница</button>
+      <button :disabled="currentPage === totalPages" @click="nextPage">Следующая страница</button>
+    </div>
+  </div>
+  <script>
+    new Vue({
+      el: '#app',
+      data: {
+        posts: [],
+        currentPage: 1,
+        totalPages: 0,
+        newPost: {
+          title: '',
+          body: ''
+        }
+      },
+      computed: {
+        pagedPosts() {
+          const startIndex = (this.currentPage - 1) * 6;
+          const endIndex = startIndex + 6;
+          return this.posts.slice(startIndex, endIndex);
+        }
+      },
+      mounted() {
+        this.fetchPosts();
+      },
+      methods: {
+        fetchPosts() {
+          axios.get('https://jsonplaceholder.typicode.com/posts?_limit=20')
+            .then(response => {
+              this.posts = response.data;
+              this.totalPages = Math.ceil(this.posts.length / 6);
+            })
+            .catch(error => {
+              console.log(error);
+            });
+        },
+        nextPage() {
+          this.currentPage++;
+        },
+        prevPage() {
+          this.currentPage--;
+        },
+        addPost() {
+          axios.post('https://jsonplaceholder.typicode.com/posts?_limit=20', this.newPost)
+            .then(response => {
+              this.posts.unshift(response.data);
+              this.newPost.title = '';
+              this.newPost.body = '';
+            })
+            .catch(error => {
+              console.log(error);
+            });
+        }
+      }
+    });
+  </script>
+</body>
+</html>
